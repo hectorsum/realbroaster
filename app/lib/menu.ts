@@ -147,8 +147,8 @@ export const STORE = {
   address: "Av. Gral. Mendiburu 290, Miraflores",
   phoneDisplay: "923 921 581",
   phoneHref: "tel:+51923921581",
-  // Number that receives the finished order (also the Yape/Plin number).
-  orderWhatsapp: "51900633137",
+  // Number that receives the finished order via WhatsApp.
+  orderWhatsapp: "51923921581",
   deliveryFee: 5,
 };
 
