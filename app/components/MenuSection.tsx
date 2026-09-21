@@ -65,7 +65,7 @@ function CategoryCarousel({ cat, ci }: { cat: Category; ci: number }) {
 
   const current = m ? Math.min(page, m.pages - 1) : 0;
   const { dragX, dragging, handlers } = useSwipe({
-    onSwipe: (dir) => m && setPage(Math.min(Math.max(current + dir, 0), m.pages - 1)),
+    onSwipe: (dir) => m && setPage((current + dir + m.pages) % m.pages),
   });
   const maxIndex = m ? Math.max(0, m.count - m.perView) : 0;
   const offset = m ? Math.min(current * m.perView, maxIndex) * m.step : 0;
@@ -91,8 +91,7 @@ function CategoryCarousel({ cat, ci }: { cat: Category; ci: number }) {
               type="button"
               className="rb-round rb-round--nav"
               aria-label={`Anterior en ${cat.label}`}
-              disabled={current === 0}
-              onClick={() => setPage(current - 1)}
+              onClick={() => m && setPage((current - 1 + m.pages) % m.pages)}
             >
               <ArrowIcon size={16} style={{ transform: "rotate(180deg)" }} />
             </button>
@@ -100,8 +99,7 @@ function CategoryCarousel({ cat, ci }: { cat: Category; ci: number }) {
               type="button"
               className="rb-round rb-round--nav"
               aria-label={`Siguiente en ${cat.label}`}
-              disabled={current === m.pages - 1}
-              onClick={() => setPage(current + 1)}
+              onClick={() => setPage((current + 1) % m.pages)}
             >
               <ArrowIcon size={16} />
             </button>
