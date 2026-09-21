@@ -567,13 +567,14 @@ img {
 }
 .rb-cat__tag { font-size: 17px; margin-top: 6px; }
 .rb-cat__navs { display: flex; gap: 10px; flex: 0 0 auto; }
-.rb-viewport { overflow: hidden; padding: 4px 8px 16px 0; }
+.rb-viewport { overflow: hidden; padding: 4px 8px 16px 0; touch-action: pan-y; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .rb-track {
   display: flex;
   gap: 18px;
   transition: transform 400ms var(--ease-out);
   will-change: transform;
 }
+.rb-track.is-dragging { transition: none; }
 .rb-cat .rb-dots { margin-top: 4px; }
 .rb-cat .rb-dot { width: 11px; height: 11px; }
 

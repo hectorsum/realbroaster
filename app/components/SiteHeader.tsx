@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BANNERS, STORE } from "@/app/lib/menu";
+import { useSwipe } from "@/app/lib/useSwipe";
 import { ArrowIcon, BurgerIcon, CloseIcon, PhoneIcon, PinIcon } from "./Icons";
 import { scrollToId, useStore } from "./StoreProvider";
 
@@ -10,10 +11,6 @@ const ROTATE_MS = 6000;
 
 function Banner() {
   const [idx, setIdx] = useState(0);
-  const [dragX, setDragX] = useState(0);
-  const [dragging, setDragging] = useState(false);
-  const startX = useRef(0);
-  const viewport = useRef<HTMLDivElement>(null);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const count = BANNERS.length;
 
@@ -36,46 +33,17 @@ function Banner() {
     restart();
   };
 
-  // Dragging only starts after a few px of movement, so plain clicks on the
-  // slide's button aren't swallowed by pointer capture.
-  const pressed = useRef(false);
-  const onDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    pressed.current = true;
-    startX.current = e.clientX;
-  };
-  const onMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!pressed.current) return;
-    const dx = e.clientX - startX.current;
-    if (!dragging) {
-      if (Math.abs(dx) < 6) return;
-      setDragging(true);
-      stop();
-      e.currentTarget.setPointerCapture?.(e.pointerId);
-    }
-    setDragX(dx);
-  };
-  const onUp = () => {
-    pressed.current = false;
-    if (!dragging) return;
-    setDragging(false);
-    const threshold = Math.min(90, (viewport.current?.clientWidth ?? 500) * 0.18);
-    if (dragX < -threshold) setIdx((i) => (i + 1) % count);
-    else if (dragX > threshold) setIdx((i) => (i - 1 + count) % count);
-    setDragX(0);
-    restart();
-  };
+  const { dragX, dragging, handlers } = useSwipe({
+    onSwipe: (dir) => setIdx((i) => (i + dir + count) % count),
+    onStart: stop,
+    onEnd: restart,
+  });
 
   return (
     <div className="rb-banner">
       <div
-        ref={viewport}
         className={`rb-ban-viewport${dragging ? " is-dragging" : ""}`}
-        onPointerDown={onDown}
-        onPointerMove={onMove}
-        onPointerUp={onUp}
-        onPointerCancel={onUp}
-        onPointerLeave={onUp}
-        onDragStart={(e) => e.preventDefault()}
+        {...handlers}
       >
         <div
           className={`rb-ban-track${dragging ? " is-dragging" : ""}`}

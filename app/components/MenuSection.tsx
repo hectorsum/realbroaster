@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { CATS, money, type Category } from "@/app/lib/menu";
+import { useSwipe } from "@/app/lib/useSwipe";
 import { ArrowIcon, HeartIcon, PlusIcon } from "./Icons";
 import { scrollToId, useStore } from "./StoreProvider";
 
@@ -63,6 +64,9 @@ function CategoryCarousel({ cat, ci }: { cat: Category; ci: number }) {
   }, [measure]);
 
   const current = m ? Math.min(page, m.pages - 1) : 0;
+  const { dragX, dragging, handlers } = useSwipe({
+    onSwipe: (dir) => m && setPage(Math.min(Math.max(current + dir, 0), m.pages - 1)),
+  });
   const maxIndex = m ? Math.max(0, m.count - m.perView) : 0;
   const offset = m ? Math.min(current * m.perView, maxIndex) * m.step : 0;
 
@@ -105,8 +109,12 @@ function CategoryCarousel({ cat, ci }: { cat: Category; ci: number }) {
         )}
       </div>
 
-      <div className="rb-viewport" ref={viewport}>
-        <div className="rb-track" ref={track} style={{ transform: `translateX(${-offset}px)` }}>
+      <div className="rb-viewport" ref={viewport} {...handlers}>
+        <div
+          className={`rb-track${dragging ? " is-dragging" : ""}`}
+          ref={track}
+          style={{ transform: `translateX(${-offset + dragX}px)` }}
+        >
           {cat.items.map((it, ii) => (
             <div
               key={it.n}
@@ -124,7 +132,7 @@ function CategoryCarousel({ cat, ci }: { cat: Category; ci: number }) {
             >
               <div className="rb-card__media">
                 <div>
-                  <Image src={it.img} alt={it.n} fill sizes="260px" />
+                  <Image src={it.img} alt={it.n} fill sizes="260px" draggable={false} />
                 </div>
               </div>
               <div className="rb-card__body">
