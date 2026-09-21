@@ -874,6 +874,9 @@ img {
 .rb-or span { font-size: 12px; font-weight: 600; color: var(--color-fg-muted); white-space: nowrap; }
 .rb-field { margin-bottom: 16px; }
 .rb-error { font-size: 12px; color: var(--red-600); margin: 10px 0 0; min-height: 16px; }
+.rb-info { font-size: 12px; font-weight: 600; color: #1f7a38; margin: 10px 0 0; }
+.rb-btn { -webkit-user-select: none; user-select: none; }
+.rb-btn:disabled { opacity: 0.7; }
 .rb-local {
   width: 100%;
   text-align: left;

@@ -13,6 +13,10 @@ function Dialog({ onClose }: { onClose: () => void }) {
   const [district, setDistrict] = useState("");
   const [address, setAddress] = useState("");
   const [msg, setMsg] = useState("");
+  const [info, setInfo] = useState("");
+  const [locating, setLocating] = useState(false);
+  // Exact GPS position, kept while the district still matches the detected one.
+  const [gps, setGps] = useState<{ coords: [number, number]; district: string | null } | null>(null);
   const closeBtn = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -34,33 +38,68 @@ function Dialog({ onClose }: { onClose: () => void }) {
       return;
     }
     setMsg("");
+    const exact = gps && gps.district === district ? gps.coords : null;
     choose({
       modo: "delivery",
       label: `Delivery · ${district}`,
       dir: a,
       zona: district,
-      coords: DISTRICTS[district] ?? STORE.coords,
-      exacta: false,
+      coords: exact ?? DISTRICTS[district] ?? STORE.coords,
+      exacta: !!exact,
     });
   };
 
   const shareLocation = () => {
     setMsg("");
-    if (!navigator.geolocation) {
-      setMsg("Tu navegador no permite compartir ubicación.");
+    setInfo("");
+    if (!window.isSecureContext) {
+      setMsg("Compartir la ubicación solo funciona en una conexión segura (https). Escribe tu dirección abajo.");
       return;
     }
+    if (!navigator.geolocation) {
+      setMsg("Tu navegador no permite compartir ubicación. Escribe tu dirección abajo.");
+      return;
+    }
+    setLocating(true);
     navigator.geolocation.getCurrentPosition(
-      (pos) =>
-        choose({
-          modo: "delivery",
-          label: "Delivery · tu ubicación",
-          dir: "Ubicación compartida desde tu celular",
-          zona: "Tu ubicación",
-          coords: [pos.coords.latitude, pos.coords.longitude],
-          exacta: true,
-        }),
-      () => setMsg("No pudimos obtener tu ubicación. Busca tu dirección abajo."),
+      async (pos) => {
+        const coords: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+        try {
+          const res = await fetch(`/api/reverse-geocode?lat=${coords[0]}&lon=${coords[1]}`);
+          if (!res.ok) throw new Error("geocode");
+          const g: { street: string | null; district: string | null; area: string | null } = await res.json();
+          setGps({ coords, district: g.district });
+          if (g.street) setAddress(g.street);
+          if (g.district) setDistrict(g.district);
+          if (g.district && g.street) {
+            setInfo("Detectamos tu ubicación. Revisa la dirección y confirma.");
+          } else if (!g.district) {
+            setMsg(
+              g.area
+                ? "Tu ubicación no está en nuestras zonas de delivery. Elige un distrito de la lista."
+                : "No pudimos identificar tu distrito. Elígelo de la lista.",
+            );
+          } else {
+            setInfo("Detectamos tu distrito. Escribe tu calle y número.");
+          }
+        } catch {
+          setGps({ coords, district: null });
+          setMsg("Encontramos tu ubicación pero no la dirección. Elige tu distrito y escríbela abajo.");
+        } finally {
+          setLocating(false);
+        }
+      },
+      (err) => {
+        setLocating(false);
+        setMsg(
+          err.code === err.PERMISSION_DENIED
+            ? "No tenemos permiso para ver tu ubicación. Actívalo en los ajustes del navegador o escribe tu dirección abajo."
+            : err.code === err.TIMEOUT
+              ? "Tardó demasiado en encontrar tu ubicación. Inténtalo otra vez o escribe tu dirección."
+              : "No pudimos obtener tu ubicación. Escribe tu dirección abajo.",
+        );
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 },
     );
   };
 
@@ -81,8 +120,8 @@ function Dialog({ onClose }: { onClose: () => void }) {
 
         {tab === "delivery" ? (
           <div>
-            <button type="button" className="rb-btn rb-btn--cta rb-btn--red rb-btn--block" style={{ fontSize: 13, padding: 14, marginBottom: 18 }} onClick={shareLocation}>
-              Compartir mi ubicación
+            <button type="button" className="rb-btn rb-btn--cta rb-btn--red rb-btn--block" style={{ fontSize: 13, padding: 14, marginBottom: 18 }} onClick={shareLocation} disabled={locating}>
+              {locating ? "Buscando tu ubicación…" : "Compartir mi ubicación"}
             </button>
             <div className="rb-or">
               <i />
@@ -91,7 +130,7 @@ function Dialog({ onClose }: { onClose: () => void }) {
             </div>
             <div className="rb-field">
               <label className="rb-label" htmlFor="rb-district">Distrito</label>
-              <select id="rb-district" className="rb-input" value={district} onChange={(e) => setDistrict(e.target.value)}>
+              <select id="rb-district" className="rb-input" value={district} onChange={(e) => { setDistrict(e.target.value); setInfo(""); }}>
                 <option value="">Selecciona un distrito</option>
                 {Object.keys(DISTRICTS).map((d) => (
                   <option key={d}>{d}</option>
@@ -106,6 +145,7 @@ function Dialog({ onClose }: { onClose: () => void }) {
               Confirmar dirección
             </button>
             <p className="rb-error" role="alert">{msg}</p>
+            {info && <p className="rb-info" role="status">{info}</p>}
           </div>
         ) : (
           <div>
