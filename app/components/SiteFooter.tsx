@@ -51,7 +51,12 @@ export default function SiteFooter() {
       </div>
 
       <div className="rb-footer__legal">
-        <span>© 2026 Real Broaster. Todos los derechos reservados.</span>
+        <span>
+          © 2026 Real Broaster. Todos los derechos reservados. &nbsp;|&nbsp; Developed by{" "}
+          <a className="rb-footer__credit" href="https://hectorsum.vercel.app/" target="_blank" rel="noopener">
+            Hector
+          </a>
+        </span>
         <span>Hecho en Miraflores, Lima</span>
       </div>
     </footer>

@@ -822,8 +822,10 @@ img {
   color: var(--cream-050);
   font-size: 12px;
 }
-.rb-footer__legal span { opacity: 0.55; }
+.rb-footer__legal span { color: rgba(255, 251, 242, 0.55); }
 .rb-footer__legal span:last-child { font-family: var(--font-mono); }
+.rb-footer__credit { color: var(--yellow-500); text-decoration: none; }
+.rb-footer__credit:hover { text-decoration: underline; }
 
 /* ---------- overlays ---------- */
 
